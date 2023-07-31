@@ -21,13 +21,22 @@ function Create-Subfolder {
     Write-Host "Created subfolder: $subfolderPath"
 }
 
+$hasNoAdditionalParameters = [System.String]::IsNullOrWhiteSpace($AdditionalParameters)
+
 function Create-CoreProject {
     param (
         [string]$ProjectName,
         [string]$AdditionalParameters
     )
+    If ($hasNoAdditionalParameters)
+    {
+        dotnet new classlib -n $ProjectName -o "$ProjectName/$ProjectName"
+    }
+    else
+    {
+        dotnet new classlib -n $ProjectName -o $"$ProjectName/$ProjectName" $AdditionalParameters
+    }
 
-    dotnet new classlib -n $ProjectName -o $ProjectName $AdditionalParameters
     Write-Host "Created Core project: $ProjectName"
 }
 
@@ -39,7 +48,15 @@ function Create-ExtensionsProject {
 
     $extensionsProjectName = "$ProjectName.Extensions"  # Prepend the ProjectName
     $extensionsProjectPath = Join-Path -Path $ProjectName -ChildPath $extensionsProjectName
-    dotnet new classlib -n $extensionsProjectName -o $extensionsProjectPath $AdditionalParameters
+    Write-Host $extensionsProjectPath
+    If ($hasNoAdditionalParameters)
+    {
+        dotnet new classlib -n $extensionsProjectName -o $extensionsProjectPath
+    }
+    else
+    {
+        dotnet new classlib -n $extensionsProjectName -o $extensionsProjectPath $AdditionalParameters
+    }
     Write-Host "Created Extensions project: $extensionsProjectPath"
 }
 
@@ -52,7 +69,14 @@ function Create-WebProject {
 
     $webProjectName = "$ProjectName.$WebProjectName"  # Prepend the ProjectName
     $webProjectPath = Join-Path -Path $ProjectName -ChildPath $webProjectName
-    dotnet new web -n $webProjectName -o $webProjectPath $AdditionalParameters
+    Write-Host $webProjectPath
+    If ($hasNoAdditionalParameters)
+    {
+        dotnet new web -n $webProjectName -o $webProjectPath
+    }
+    else {
+        dotnet new web -n $webProjectName -o $webProjectPath $AdditionalParameters
+    }
     Write-Host "Created Web project: $webProjectPath"
 }
 
@@ -65,7 +89,18 @@ function Create-UnitTestProject {
 
     $unitTestProjectName = "$ProjectName.Tests"  # Prepend the ProjectName
     $unitTestProjectPath = Join-Path -Path $ProjectName -ChildPath $unitTestProjectName
-    dotnet new $UnitTestFramework -n $unitTestProjectName -o $unitTestProjectPath $AdditionalParameters
+
+    Write-Host $unitTestProjectPath
+
+    if($hasNoAdditionalParameters)
+    {
+        dotnet new $UnitTestFramework -n $unitTestProjectName -o $unitTestProjectPath
+    }
+    else
+    {
+        dotnet new $UnitTestFramework -n $unitTestProjectName -o $unitTestProjectPath $AdditionalParameters
+    }
+    
     Write-Host "Created Unit Test project: $unitTestProjectPath"
 }
 
@@ -79,12 +114,58 @@ function Create-DirectoryBuildProps {
 <Project>
   <PropertyGroup>
     <!-- Customize shared properties for projects in this solution -->
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>Romesh Abeyawardena</Authors>
+    <Company>DNI</Company>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+    <FileVersion>0.0.0.0</FileVersion>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Version>0.0.0.0</Version>
+    <VersionSuffix>DEV</VersionSuffix>
   </PropertyGroup>
 </Project>
 "@
     $directoryBuildPropsContent | Out-File -FilePath $directoryBuildPropsPath -Encoding UTF8
     Write-Host "Created Directory.build.props: $directoryBuildPropsPath"
+}
+
+# Create the output directory if it doesn't exist
+if (-not (Test-Path -Path $OutputDirectory -PathType Container)) {
+    New-Item -ItemType Directory -Path $OutputDirectory -ErrorAction Stop | Out-Null
+}
+
+function Create-README {
+    param (
+        [string]$ProjectName
+    )
+
+    $readmePath = Join-Path -Path $ProjectName -ChildPath "README.md"
+    if (-not (Test-Path -Path $readmePath)) {
+        $readmeContent = @"
+# $ProjectName
+
+This is the project README. Add a brief project description and any relevant information here.
+
+## Getting Started
+
+Provide instructions on how to get the project up and running.
+
+## Usage
+
+Explain how to use the project and its features.
+
+## Contributing
+
+Explain how others can contribute to the project.
+
+## License
+
+Specify the project's license here.
+"@
+        $readmeContent | Out-File -FilePath $readmePath -Encoding UTF8
+        Write-Host "Created README.md: $readmePath"
+    }
 }
 
 # Create the output directory if it doesn't exist
@@ -99,8 +180,11 @@ Write-Host "Output directory: $OutputDirectory"
 # Create the subfolder
 Create-Subfolder -Path $OutputDirectory -SubfolderName $ProjectName
 
+Set-Location "$OutputDirectory/$ProjectName"
 # Create the solution file
 dotnet new sln
+
+cd ..
 
 # Create Core project if specified
 if ($AddCore) {
@@ -126,3 +210,6 @@ if ($UnitTestFramework) {
 if ($GenerateDirectoryBuildProps) {
     Create-DirectoryBuildProps -OutputDirectory $OutputDirectory
 }
+
+# Create default README.md
+Create-README -ProjectName $ProjectName

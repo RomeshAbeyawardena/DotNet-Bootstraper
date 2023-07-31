@@ -1,13 +1,14 @@
 <Project>
   <PropertyGroup>
+    <!-- Customize shared properties for projects in this solution -->
     <Authors>Romesh Abeyawardena</Authors>
     <Company>DNI</Company>
-    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
     <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <FileVersion>0.1.0.1</FileVersion>
+    <FileVersion>0.0.0.0</FileVersion>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Version>0.1.0.1</Version>
+    <Version>0.0.0.0</Version>
     <VersionSuffix>DEV</VersionSuffix>
   </PropertyGroup>
 </Project>
