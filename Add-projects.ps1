@@ -10,6 +10,8 @@ param (
     [string]$AdditionalParameters
 )
 
+$configuredProjectPaths = [System.Collections.ArrayList]::new()
+
 function Create-Subfolder {
     param (
         [string]$Path,
@@ -38,6 +40,8 @@ function Create-CoreProject {
     }
 
     Write-Host "Created Core project: $ProjectName"
+
+    $configuredProjectPaths.Add("$ProjectName/$ProjectName")
 }
 
 function Create-ExtensionsProject {
@@ -57,7 +61,9 @@ function Create-ExtensionsProject {
     {
         dotnet new classlib -n $extensionsProjectName -o $extensionsProjectPath $AdditionalParameters
     }
+
     Write-Host "Created Extensions project: $extensionsProjectPath"
+    $configuredProjectPaths.Add($extensionsProjectPath)
 }
 
 function Create-WebProject {
@@ -78,6 +84,7 @@ function Create-WebProject {
         dotnet new web -n $webProjectName -o $webProjectPath $AdditionalParameters
     }
     Write-Host "Created Web project: $webProjectPath"
+    $configuredProjectPaths.Add($webProjectPath)
 }
 
 function Create-UnitTestProject {
@@ -102,6 +109,7 @@ function Create-UnitTestProject {
     }
     
     Write-Host "Created Unit Test project: $unitTestProjectPath"
+    $configuredProjectPaths.Add($unitTestProjectPath)
 }
 
 function Create-DirectoryBuildProps {
@@ -188,23 +196,30 @@ cd ..
 
 # Create Core project if specified
 if ($AddCore) {
-    Create-CoreProject -ProjectName $ProjectName -AdditionalParameters $AdditionalParameters
+    $path = Create-CoreProject -ProjectName $ProjectName -AdditionalParameters $AdditionalParameters
 }
 
 # Create Extensions project if specified
 if ($AddExtensions) {
-    Create-ExtensionsProject -ProjectName $ProjectName -AdditionalParameters $AdditionalParameters
+    $path = Create-ExtensionsProject -ProjectName $ProjectName -AdditionalParameters $AdditionalParameters
 }
 
 # Create Web project if specified
 if ($AddWeb) {
-    Create-WebProject -ProjectName $ProjectName -WebProjectName $WebProjectName -AdditionalParameters $AdditionalParameters
+    $path = Create-WebProject -ProjectName $ProjectName -WebProjectName $WebProjectName -AdditionalParameters $AdditionalParameters
+    
 }
 
 # Create Unit Test project if specified
 if ($UnitTestFramework) {
-    Create-UnitTestProject -ProjectName $ProjectName -UnitTestFramework $UnitTestFramework -AdditionalParameters $AdditionalParameters
+    $path = Create-UnitTestProject -ProjectName $ProjectName -UnitTestFramework $UnitTestFramework -AdditionalParameters $AdditionalParameters
 }
+
+foreach($path in $configuredProjectPaths) {
+    dotnet sln "$OutputDirectory/$ProjectName/$ProjectName.sln" add $path
+}
+
+Set-Location "$OutputDirectory/$ProjectName"
 
 # Generate Directory.build.props if specified
 if ($GenerateDirectoryBuildProps) {
@@ -213,3 +228,5 @@ if ($GenerateDirectoryBuildProps) {
 
 # Create default README.md
 Create-README -ProjectName $ProjectName
+
+cd ..
