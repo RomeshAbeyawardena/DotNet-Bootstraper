@@ -117,7 +117,7 @@ function Create-DirectoryBuildProps {
         [string]$OutputDirectory
     )
 
-    $directoryBuildPropsPath = Join-Path -Path $OutputDirectory -ChildPath "Directory.build.props"
+    $directoryBuildPropsPath = Join-Path -Path "$OutputDirectory/$ProjectName" -ChildPath "Directory.build.props"
     $directoryBuildPropsContent = @"
 <Project>
   <PropertyGroup>
@@ -140,7 +140,7 @@ function Create-DirectoryBuildProps {
 
 # Create the output directory if it doesn't exist
 if (-not (Test-Path -Path $OutputDirectory -PathType Container)) {
-    New-Item -ItemType Directory -Path $OutputDirectory -ErrorAction Stop | Out-Null
+    New-Item -ItemType Directory -Path "$OutputDirectory/$ProjectName" -ErrorAction Stop | Out-Null
 }
 
 function Create-README {
@@ -148,7 +148,7 @@ function Create-README {
         [string]$ProjectName
     )
 
-    $readmePath = Join-Path -Path $ProjectName -ChildPath "README.md"
+    $readmePath = Join-Path -Path "$OutputDirectory/$ProjectName" -ChildPath "README.md"
     if (-not (Test-Path -Path $readmePath)) {
         $readmeContent = @"
 # $ProjectName
